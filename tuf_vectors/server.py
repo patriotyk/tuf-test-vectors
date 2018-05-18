@@ -113,9 +113,6 @@ def init_app(
         if uptane == 'director':
             if metadata not in ['root', 'targets']:
                 abort(404)
-        else:
-            if metadata not in ['root', 'targets', 'timestamp', 'snapshot']:
-                abort(404)
 
         repo = repos.get(repo, None)
         if repo is None:
@@ -133,7 +130,9 @@ def init_app(
 
         data = getattr(repo, metadata, None)
         if data is None:
-            abort(400)
+            data = repo.delegations.get(metadata, None)
+            if data is None:
+                abort(400)
 
         return jsonify(data.value)
 

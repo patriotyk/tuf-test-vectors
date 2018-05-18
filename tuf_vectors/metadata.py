@@ -58,7 +58,6 @@ class Delegation(Helper):
     def __init__(
             self,
             name: str,
-            keys_idx: list,
             paths: list,
             roles: list,
             agreement_threshold: int=None,
@@ -68,20 +67,10 @@ class Delegation(Helper):
         self.value = {
             'name': name,
             'paths': paths,
-            'keys': {},
-            'roles': {role.name: role.value for role in roles},
+            'roles': [role.value for role in roles],
             'agreement_threshold': agreement_threshold,
             'terminating': terminating,
         }
-
-        for idx in keys_idx:
-            _, pub = self.get_key(idx)
-            self.value['keys'][self.key_id(pub, bad_id=False)] = {
-                'keytype': short_key_type(self.key_type),
-                'keyval': {
-                    'public': pub,
-                },
-            }
 
 
 class Role(Helper):
@@ -91,7 +80,7 @@ class Role(Helper):
         self.name = name
         self.value = {
             'name': name,
-            'keyids': [self.key_id(self.get_key(i), bad_id=False) for i in keys_idx],
+            'keyids': [self.key_id(self.get_key(i)[1], bad_id=False) for i in keys_idx],
             'threshold': threshold if threshold is not None else len(keys_idx),
         }
 
@@ -459,6 +448,7 @@ class Targets(Metadata):
             targets_sign_keys_idx: list=None,
             role_name: str='targets',
             ecu_identifier: str=None,
+            delegations_keys_idx: list=None,
             delegations: types.FunctionType=None,  # -> list
             **kwargs) -> None:
         # add these back in for Metadata
@@ -489,8 +479,18 @@ class Targets(Metadata):
 
         if delegations:
             signed['delegations'] = []
+            signed['keys'] = {} 
             for delegation in delegations:
                 signed['delegations'].append(delegation.value)
+
+            for key_idx in delegations_keys_idx:
+                _, pub = self.get_key(key_idx)
+                signed['keys'][self.key_id(pub, bad_id=False)] = {
+                    'keytype': short_key_type(self.key_type),
+                    'keyval': {
+                        'public': pub,
+                    },
+                }
 
         sig_directives = [(self.get_key(i), False) for i in targets_sign_keys_idx]
 

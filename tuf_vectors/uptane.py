@@ -2908,7 +2908,6 @@ class SimpleDelegationUptane(Uptane):
             return [
                 Delegation(
                     name='foo',
-                    keys_idx=[6],
                     paths=[DEFAULT_TARGET_NAME],
                     roles=[
                         Role(
@@ -2926,6 +2925,7 @@ class SimpleDelegationUptane(Uptane):
         TARGETS_KWARGS = {
             'targets_keys_idx': TARGETS_KEYS_IDX,
             'targets': lambda ecu_id, hw_id: [],
+            'delegations_keys_idx': DELEGATION_KEYS_IDX,
             'delegations': __delegations,
         }
 
