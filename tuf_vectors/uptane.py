@@ -4,7 +4,7 @@ import re
 
 from os import path
 
-from tuf_vectors.metadata import Target
+from tuf_vectors.metadata import Target, Delegation, Role
 from tuf_vectors.step import Step, DEFAULT_TARGET_NAME, DEFAULT_TARGET_CONTENT
 
 
@@ -2889,11 +2889,11 @@ class SimpleDelegationUptane(Uptane):
         TARGETS_KEYS_IDX = [1]
         SNAPSHOT_KEYS_IDX = [2]
         TIMESTAMP_KEYS_IDX = [3]
-        DELEGTION_KEYS_IDX = [6]
+        DELEGATION_KEYS_IDX = [6]
 
         DELEGATIONS = {
             'foo': {
-                'targets_keys_idx': DELEGTION_KEYS_IDX,
+                'targets_keys_idx': DELEGATION_KEYS_IDX,
             },
         }
 
@@ -2904,8 +2904,24 @@ class SimpleDelegationUptane(Uptane):
             'timestamp_keys_idx': TIMESTAMP_KEYS_IDX,
         }
 
-        def __delgations():
-            pass
+        def __delegations(**kwargs) -> list:
+            return [
+                Delegation(
+                    name='foo',
+                    keys_idx=[6],
+                    paths=[DEFAULT_TARGET_NAME],
+                    roles=[
+                        Role(
+                            name='role1',
+                            keys_idx=[6],
+                            **kwargs
+                        ),
+                    ],
+                    agreement_threshold=1,
+                    terminating=False,
+                    **kwargs
+                ),
+            ]
 
         TARGETS_KWARGS = {
             'targets_keys_idx': TARGETS_KEYS_IDX,

@@ -18,7 +18,7 @@ from tuf_vectors import sha256, sha512, _cjson_subset_check, short_key_type
 
 class Helper:
 
-    def __init__(self, key_type: str, cjson_strategy: str) -> None:
+    def __init__(self, key_type: str, cjson_strategy: str, **kwargs) -> None:
         self.key_type = key_type
         self.cjson_strategy = cjson_strategy
         self.key_store = {}
@@ -91,7 +91,7 @@ class Role(Helper):
         self.name = name
         self.value = {
             'name': name,
-            'keyids': [self.key_id(self.get_key(i)) for i in keys_idx],
+            'keyids': [self.key_id(self.get_key(i), bad_id=False) for i in keys_idx],
             'threshold': threshold if threshold is not None else len(keys_idx),
         }
 
@@ -170,7 +170,6 @@ class Metadata(Helper):
             uptane_role: str,
             ecu_identifier: str,
             hardware_id: str,
-            delegations: dict=None,
             **kwargs
             ) -> None:
         super().__init__(**kwargs)
@@ -460,14 +459,16 @@ class Targets(Metadata):
             targets_sign_keys_idx: list=None,
             role_name: str='targets',
             ecu_identifier: str=None,
-            delegations: dict={},
+            delegations: types.FunctionType=None,  # -> list
             **kwargs) -> None:
         # add these back in for Metadata
         kwargs.update(hardware_id=hardware_id, ecu_identifier=ecu_identifier)
         super().__init__(**kwargs)
 
-        if delegations is None:
-            delegations = {}
+        if delegations is not None:
+            delegations = delegations(**kwargs)
+        else:
+            delegations = []
 
         if targets_sign_keys_idx is None:
             targets_sign_keys_idx = targets_keys_idx
@@ -486,8 +487,10 @@ class Targets(Metadata):
         for target in self.targets:
             signed['targets'][target.name] = target.meta
 
-        for delegation in delegations:
-            print('wat')
+        if delegations:
+            signed['delegations'] = []
+            for delegation in delegations:
+                signed['delegations'].append(delegation.value)
 
         sig_directives = [(self.get_key(i), False) for i in targets_sign_keys_idx]
 
